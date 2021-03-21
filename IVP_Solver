@@ -1,0 +1,58 @@
+import numpy as np
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+
+#Flächenträgheitsmoment Laminat
+h = 2                           #[mm]
+b = 50                          #[mm] 
+I_lam = (b*h**3)/12             #[mm^4]
+
+#Gewichtskraft
+gew = 0.5     	                #[kg]
+g = 9.81                        #[m/s²]
+F = gew*g                       #[N]
+
+#Emodul Laminat
+E = 176000                      #[MPa]
+
+#konstanter Faktor
+c = F/(E*I_lam)
+
+#Moment bzw. Kraft welche die FGL ausübt
+d_sma = 0.5                     #[mm]
+r_sma = d_sma/2                 #[mm]
+A_sma = np.pi*r_sma**2          #[mm²]
+sigma_sma = 200                 #[MPa]
+F_sma = sigma_sma*5*A_sma         #[N]
+z_sma = 20                      #[mm]
+M_sma = F_sma*z_sma   #[Nmm]
+
+#Randbedingungen
+theta_zero = 0
+delta_theta_L = M_sma/(E*I_lam)
+
+x = np.linspace(0,600)
+
+def equations(x, y):
+    yprime = np.zeros(2)
+    
+    yprime[0] = y[1]
+    yprime[1] = -c * np.cos(y[0])
+    
+    return yprime
+
+xspan = (x[0],x[-1])
+
+theta_0 = [theta_zero,delta_theta_L]
+
+sol = solve_ivp(equations, xspan, theta_0, t_eval=x)
+
+theta_num = sol.y[0,:]
+x_num = np.array(x*np.cos(sol.y[0,:]))
+y_num = np.array(x*np.sin(sol.y[0,:]))
+#plt.plot(x,theta_num,'b:')
+plt.plot(x_num,y_num,'r')
+plt.xlim(0,700)
+plt.ylim(0,500)
+plt.xlabel('Aktorlänge in mm')
+plt.ylabel('Auslenkung in mm')
